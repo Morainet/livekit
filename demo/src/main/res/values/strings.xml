@@ -1,0 +1,24 @@
+<resources>
+    <string name="app_name">LiveKit Demo</string>
+
+    <string name="hero_title">LiveKit</string>
+    <string name="hero_subtitle">Android 实时活动 · Live Updates</string>
+    <string name="chip_progress_style">ProgressStyle</string>
+    <string name="chip_cross_process">跨进程 · FGS</string>
+
+    <string name="card_native_title">原生 Live Update</string>
+    <string name="card_native_desc">Android 16 ProgressStyle 外卖进度：分段进度条、tracker 图标与零功耗倒计时，一键推进下单→备餐→配送→送达。</string>
+    <string name="btn_order">开始下单演示</string>
+
+    <string name="card_rv_title">RemoteViews 降级卡片</string>
+    <string name="card_rv_desc">无 ProgressStyle 时的自定义通知路径，演示字段级增量合并与限流。</string>
+    <string name="btn_start">START</string>
+    <string name="btn_update">UPDATE</string>
+    <string name="btn_end">END</string>
+
+    <string name="card_bitmap_title">Bitmap 沙箱 (§11)</string>
+    <string name="card_bitmap_desc">推送一张 4000×4000（≈64MB）巨图，SDK 自动等比下采样后再上通知，避免 TransactionTooLargeException。</string>
+    <string name="btn_huge">巨图安全渲染</string>
+
+    <string name="footer_hint">下拉通知栏查看实时活动</string>
+</resources>

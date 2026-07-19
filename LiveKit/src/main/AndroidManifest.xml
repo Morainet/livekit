@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+
+    <application>
+        <service
+            android:name="com.morainet.livekit.internal.platform.LiveKitForegroundService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
+
+        <provider
+            android:name="com.morainet.livekit.internal.store.LiveKitStoreProvider"
+            android:authorities="${applicationId}.livekit.store"
+            android:exported="false" />
+
+        <receiver
+            android:name="com.morainet.livekit.internal.platform.LiveKitCleanupReceiver"
+            android:exported="false" />
+    </application>
+
+</manifest>

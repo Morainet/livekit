@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+
+    <color name="lk_bg">#FFF2F3F8</color>
+    <color name="lk_card">#FFFFFFFF</color>
+    <color name="lk_primary">#FFFF5A5F</color>
+    <color name="lk_hero_start">#FFFF7A59</color>
+    <color name="lk_hero_end">#FFFF4E7E</color>
+    <color name="lk_text">#FF1B1B1F</color>
+    <color name="lk_text_sub">#FF6C6C74</color>
+    <color name="lk_secondary_bg">#FFFFF0F0</color>
+    <color name="lk_secondary_stroke">#FFFFD6D8</color>
+    <color name="lk_ripple_light">#33FFFFFF</color>
+    <color name="lk_ripple_primary">#22FF5A5F</color>
+    <color name="lk_chip_teal">#FF10B4AF</color>
+    <color name="lk_chip_purple">#FFB06FE6</color>
+    <color name="lk_hero_text_sub">#CCFFFFFF</color>
+</resources>

@@ -1,0 +1,25 @@
+[versions]
+agp = "8.12.0"
+kotlin = "2.1.0"
+coroutines = "1.9.0"
+androidxCore = "1.17.0"
+mmkv = "2.4.0"
+junit = "4.13.2"
+mavenPublish = "0.34.0"
+
+minSdk = "24"
+compileSdk = "36"
+targetSdk = "36"
+
+[libraries]
+kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "coroutines" }
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
+androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "androidxCore" }
+mmkv = { module = "com.tencent:mmkv", version.ref = "mmkv" }
+junit = { module = "junit:junit", version.ref = "junit" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+android-library = { id = "com.android.library", version.ref = "agp" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+vanniktech-publish = { id = "com.vanniktech.maven.publish", version.ref = "mavenPublish" }
