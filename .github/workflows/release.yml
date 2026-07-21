@@ -6,7 +6,8 @@ on:
     tags: [ 'v*' ]
 
 permissions:
-  contents: read
+  contents: write   # 创建 GitHub Release 需要 write 权限
+  packages: write
 
 jobs:
   publish:
@@ -46,3 +47,14 @@ jobs:
           ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.CENTRAL_PASSWORD }}
           ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_KEY }}
           ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_KEY_PASSWORD }}
+
+      # Maven Central 发布成功后，在 GitHub 上创建对应的 Release 页：
+      # - 自动从合入 main 的 PR 标题生成 changelog
+      # - 附带 release AAR 作为可下载附件
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            livekit/build/outputs/aar/*.aar
