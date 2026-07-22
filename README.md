@@ -38,7 +38,7 @@ It renders **Android 16 native `ProgressStyle`** live updates when available and
 
 ```kotlin
 dependencies {
-    implementation("io.github.morainet:livekit:1.0.0")
+    implementation("io.github.morainet:livekit:0.0.2")
 
     // Optional: high-performance multi-process storage backend
     implementation("com.tencent:mmkv:2.4.0")
