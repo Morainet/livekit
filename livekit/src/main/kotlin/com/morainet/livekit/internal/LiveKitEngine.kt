@@ -113,6 +113,29 @@ internal object LiveKitEngine {
 
     fun setObserver(observer: LiveKitObserver?) { this.observer = observer }
 
+    /**
+     * 重新探测系统能力（白皮书 §6）。宿主在用户授予 POST_NOTIFICATIONS（或切换通知开关）后调用，
+     * 让 caps 反映最新状态，避免因 init 时一次性快照过期而持续抛 PermissionMissing。
+     * 若探测到权限已开且仍有活动在途，自动补渲染一次。
+     */
+    fun refreshCapabilities() {
+        if (!initialized || !isMain) return
+        val wasOff = caps?.notificationsEnabled == false
+        caps = CapabilityProbe.probe(appContext)
+        if (wasOff && caps?.notificationsEnabled == true) {
+            // 权限刚开：对已落盘的活动补一次渲染（兜住 init 后被 PermissionMissing 拦下的请求）。
+            scope.launch { reRenderAll() }
+        }
+    }
+
+    private suspend fun reRenderAll() {
+        for (key in stateStore.keys()) {
+            val state = stateStore.get(key) ?: continue
+            if (state.ended || state.templateId == null) continue
+            renderNow(key, state.payload)
+        }
+    }
+
     /** 任意进程：裁决 + 落盘。渲染由 :main 的 store 观察者接管。 */
     fun dispatch(env: Envelope) {
         if (!initialized) return

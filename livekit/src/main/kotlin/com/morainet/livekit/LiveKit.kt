@@ -116,6 +116,14 @@ object LiveKit {
         return NotificationManagerCompat.from(ctx).areNotificationsEnabled()
     }
 
+    /**
+     * 权限 / 系统能力变更后刷新能力快照。宿主在用户授予 POST_NOTIFICATIONS（或重新打开通知开关）
+     * 后调用，SDK 会重新探测并在权限由关转开时自动补渲染被 [LiveKitEvent.PermissionMissing] 拦下的活动。
+     */
+    fun refreshCapabilities() {
+        LiveKitEngine.refreshCapabilities()
+    }
+
     private fun envelope(
         bizType: String,
         activityId: String,

@@ -7,7 +7,6 @@
 package com.morainet.livekit.demo
 
 import android.Manifest
-import android.app.Activity
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -15,6 +14,7 @@ import android.os.Handler
 import android.os.Looper
 import android.view.View
 import android.widget.Button
+import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
@@ -23,20 +23,18 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import com.morainet.livekit.LiveKit
 
-class MainActivity : Activity() {
+class MainActivity : ComponentActivity() {
 
     private val biz = "food"
     private val actId = "10001"
     private val main = Handler(Looper.getMainLooper())
 
-    // Android 13+（API 33+）运行时申请 POST_NOTIFICATIONS；旧版本在 Manifest 声明即可。
-    // 不授予的话 SDK 每次渲染都会因 areNotificationsEnabled()==false 抛 PermissionMissing。
+    // Android 13+（API 33+）必须运行时申请 POST_NOTIFICATIONS。
+    // 授权后调 refreshCapabilities()：SDK 重新探测能力并自动补渲染被 PermissionMissing 拦下的活动。
     private val requestNotificationPermission = registerForActivityResult(
         ActivityResultContracts.RequestPermission(),
     ) { granted ->
-        if (!granted) {
-            android.util.Log.w("LiveKitDemo", "POST_NOTIFICATIONS denied; Live Activity 将无法显示")
-        }
+        if (granted) LiveKit.refreshCapabilities()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

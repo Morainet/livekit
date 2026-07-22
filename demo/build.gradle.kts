@@ -42,5 +42,7 @@ android {
 dependencies {
     implementation(project(":livekit"))
     implementation(libs.androidx.core.ktx)
+    // registerForActivityResult / ActivityResultContracts 来源，用于运行时申请 POST_NOTIFICATIONS。
+    implementation(libs.androidx.activity)
     implementation(libs.mmkv)
 }
