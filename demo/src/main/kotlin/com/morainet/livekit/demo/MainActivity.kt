@@ -6,12 +6,17 @@
 
 package com.morainet.livekit.demo
 
+import android.Manifest
 import android.app.Activity
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.view.View
 import android.widget.Button
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -24,15 +29,34 @@ class MainActivity : Activity() {
     private val actId = "10001"
     private val main = Handler(Looper.getMainLooper())
 
+    // Android 13+（API 33+）运行时申请 POST_NOTIFICATIONS；旧版本在 Manifest 声明即可。
+    // 不授予的话 SDK 每次渲染都会因 areNotificationsEnabled()==false 抛 PermissionMissing。
+    private val requestNotificationPermission = registerForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { granted ->
+        if (!granted) {
+            android.util.Log.w("LiveKitDemo", "POST_NOTIFICATIONS denied; Live Activity 将无法显示")
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         applyEdgeToEdgeInsets()
+        ensureNotificationPermission()
         findViewById<Button>(R.id.btn_order).setOnClickListener { doOrder() }
         findViewById<Button>(R.id.btn_start).setOnClickListener { doStart() }
         findViewById<Button>(R.id.btn_update).setOnClickListener { doUpdate() }
         findViewById<Button>(R.id.btn_end).setOnClickListener { doEnd() }
         findViewById<Button>(R.id.btn_huge).setOnClickListener { doHugeImage() }
+    }
+
+    /** Android 13+ 首次进入弹窗申请通知权限；已授予或低版本直接跳过。 */
+    private fun ensureNotificationPermission() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
+        val granted = ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) ==
+            PackageManager.PERMISSION_GRANTED
+        if (!granted) requestNotificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
     }
 
     /** targetSdk 35+ 默认全屏沉浸：把系统栏 inset 作为根视图 padding，避免内容顶到状态栏 / 导航栏下面。 */
