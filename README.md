@@ -81,6 +81,35 @@ LiveKit.update("food", "10001", mapOf("subtitle" to "~12 min"))          // fiel
 LiveKit.end("food", "10001")
 ```
 
+## Notification permission (Android 13+)
+
+Rendering live activities requires the system notification permission. On Android 13 (API 33)+ you **must request `POST_NOTIFICATIONS` at runtime**, otherwise the SDK emits a [`PermissionMissing`](#observability) event on every render.
+
+```kotlin
+class MainActivity : ComponentActivity() {
+    private val requestPermission = registerForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { granted ->
+        // Key point: refresh the capability snapshot after the grant — the SDK re-probes and
+        // automatically re-renders any activity that was blocked by PermissionMissing.
+        if (granted) LiveKit.refreshCapabilities()
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+        ) {
+            requestPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
+}
+```
+
+> **Why `refreshCapabilities()` is needed:** `LiveKit.init()` probes system capabilities once and caches the result. If the permission wasn't granted at init time, this snapshot keeps reporting "no notification permission" even after the user grants it. `refreshCapabilities()` forces a re-probe and, on a closed→open transition, re-renders in-flight activities.
+
+Query the current permission state with `LiveKit.hasNotificationPermission()`.
+
 ## Native Live Updates (Android 16 `ProgressStyle`)
 
 Register a **progress template** for the same `templateId`; the SDK picks the native channel when the device supports it and falls back to your `RemoteViews` template otherwise.
@@ -162,7 +191,7 @@ sealed interface LiveKitEvent {
     data class Rendered(val key: String, val channel: RenderChannel)
     data class Dropped(val key: String, val reason: DropReason)          // OUT_OF_ORDER / ORPHAN / MALFORMED / STORE_BUSY
     data class Degraded(val key: String, val from: RenderChannel, val to: RenderChannel)
-    data class PermissionMissing(val key: String)
+    data class PermissionMissing(val key: String)                        // notification permission missing; render skipped
     data class Throttled(val key: String, val mergedCount: Int)
     data class UnsupportedVersion(val version: Int, val key: String)
 }

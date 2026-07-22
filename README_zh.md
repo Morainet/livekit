@@ -81,6 +81,34 @@ LiveKit.update("food", "10001", mapOf("subtitle" to "约 12 分钟"))          /
 LiveKit.end("food", "10001")
 ```
 
+## 通知权限（Android 13+）
+
+渲染实时活动依赖系统通知权限。Android 13（API 33）及以上**必须运行时申请** `POST_NOTIFICATIONS`,否则 SDK 会在每次渲染时抛出 [`PermissionMissing`](#可观测性) 事件。
+
+```kotlin
+class MainActivity : ComponentActivity() {
+    private val requestPermission = registerForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { granted ->
+        // 关键：授权后刷新能力快照,SDK 会重新探测并自动补渲染被 PermissionMissing 拦下的活动。
+        if (granted) LiveKit.refreshCapabilities()
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+        ) {
+            requestPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
+}
+```
+
+> **为什么需要 `refreshCapabilities()`**:`LiveKit.init()` 时会一次性探测系统能力并缓存。如果初始化时权限未授予,这份快照会一直认为"无通知权限",即使用户后来授权也不会更新。调用 `refreshCapabilities()` 强制重新探测,并在权限由关转开时自动补渲染在途活动。
+
+查询当前权限状态可使用 `LiveKit.hasNotificationPermission()`。
+
 ## 原生 Live Updates（Android 16 `ProgressStyle`）
 
 为同一个 `templateId` 再注册一个**进度模板**;设备支持时 SDK 走原生通道,否则回退到你的 `RemoteViews` 模板。
@@ -162,7 +190,7 @@ sealed interface LiveKitEvent {
     data class Rendered(val key: String, val channel: RenderChannel)
     data class Dropped(val key: String, val reason: DropReason)          // OUT_OF_ORDER / ORPHAN / MALFORMED / STORE_BUSY
     data class Degraded(val key: String, val from: RenderChannel, val to: RenderChannel)
-    data class PermissionMissing(val key: String)
+    data class PermissionMissing(val key: String)                        // 通知权限未授予,渲染被拦下
     data class Throttled(val key: String, val mergedCount: Int)
     data class UnsupportedVersion(val version: Int, val key: String)
 }

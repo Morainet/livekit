@@ -282,13 +282,13 @@ SDK 抽象出 `ILiveKitStore` 接口。**默认实现不再采用 `SharedPrefere
 
 ## 6. 平台适配、能力探测与降级矩阵
 
-SDK 启动时做一次 **能力探测（Capability Probe）**，缓存结果，运行期据此选路。
+SDK 启动时做一次 **能力探测（Capability Probe）**，缓存结果，运行期据此选路。宿主在权限变更（如用户授予 `POST_NOTIFICATIONS`）后可调 `LiveKit.refreshCapabilities()` 强制重新探测，避免快照过期导致持续误判降级。
 
 | 系统 / 条件 | 首选渲染通道 | 降级链 |
 |---|---|---|
 | Android 16+ 且支持 `ProgressStyle` | 原生 Live Updates（状态栏 Live Chip） | → Legacy `RemoteViews` |
 | Android 8–15 | `RemoteViews` 自定义布局 + FGS 保活 | → 标准 `Notification` 文本样式 |
-| 无 `POST_NOTIFICATIONS` 权限（13+） | 不弹通知，仅内部维护最终态；激活**无权限静默压实（Silent Compaction）** | 回调 `onPermissionMissing`；限流窗口自适应拉长至上限（默认 5000ms）并挂起所有非关键重绘定时器，仅保留内存最终态，直至权限变更后一次性补发 |
+| 无 `POST_NOTIFICATIONS` 权限（13+） | 不弹通知，仅内部维护最终态；激活**无权限静默压实（Silent Compaction）** | 回调 `onPermissionMissing`；限流窗口自适应拉长至上限（默认 5000ms）并挂起所有非关键重绘定时器，仅保留内存最终态，直至宿主调 `refreshCapabilities()` 触发权限由关转开后一次性补发 |
 | FGS 类型不满足 / 后台启动受限（14+ BFGS 约束） | 自动降级为**非 FGS 常驻通知**（不占 FGS 额度、可被回收，但绝不崩溃），并置「待提权」标记 | 宿主回到前台（`onAppForegrounded`）后 SDK **自动提权（Promotion）** 回标准 FGS 通道；上报 `Degraded` |
 | ROM 通知被限流 | 合并窗口自适应放大（backoff） | 保证最终态一致 |
 | ROM Chronometer 异常（黑名单机型） | 倒计时改 `AlarmManager` 节点式重绘 | 保证倒计时数字正确（见 §4.4 Note） |
@@ -306,7 +306,7 @@ SDK 启动时做一次 **能力探测（Capability Probe）**，缓存结果，�
 
 | 版本 | 约束 | SDK 处理 |
 |---|---|---|
-| Android 13（API 33）+ | 运行时 `POST_NOTIFICATIONS` 权限 | SDK 不主动申请（交由宿主决定时机），提供 `LiveKit.hasNotificationPermission()`；缺失时回调并缓存待发态 |
+| Android 13（API 33）+ | 运行时 `POST_NOTIFICATIONS` 权限 | SDK 不主动申请（交由宿主决定时机），提供 `LiveKit.hasNotificationPermission()`；缺失时回调并缓存待发态。权限授予后宿主调用 `LiveKit.refreshCapabilities()` 重新探测能力快照，SDK 自动补发缓存中待渲染的活动 |
 | Android 14（API 34）+ | 前台服务必须声明 `foregroundServiceType` 且匹配用途 | 保活服务默认声明 `dataSync` / 由 `LiveKitConfig.fgsType` 指定；宿主需在 `Manifest` 补齐 `FOREGROUND_SERVICE_*` 权限 |
 | Android 12（API 31）+ / 14（API 34）+ | 后台启动 FGS 受限（BFGS）：`:main` 处于后台被挂起时，即便被 `:push` 唤醒，`startForegroundService()` 仍极易抛 `ForegroundServiceStartNotAllowedException` | 优先「先建通知再择机 FGS」；捕获该异常后**自动降级**为非 FGS 常驻通知并置「待提权」标记，回前台后自动提权（详见下方闭环） |
 | 全版本 | 通知渠道重要性 | SDK 建默认渠道 `IMPORTANCE_LOW`（避免每次响铃），业务可覆盖 |
@@ -472,6 +472,10 @@ object LiveKit {
     /** 主动查询通知权限（Android 13+），供宿主决定申请时机 */
     fun hasNotificationPermission(): Boolean
 
+    /** 权限 / 系统能力变更后刷新能力快照（§6）。宿主在用户授予 POST_NOTIFICATIONS（或重新打开通知开关）
+     *  后调用，SDK 重新探测并在权限由关转开时自动补渲染被 PermissionMissing 拦下的活动。 */
+    fun refreshCapabilities()
+
     /** 注册全局观测 / 异常监听器（见 §12） */
     fun setObserver(observer: LiveKitObserver)
 }
@@ -601,7 +605,7 @@ Glance 产出的 `RemoteViews` 复用同一套限流、乱序、跨进程、Bind
 | Internal Key | `biz_type#activity_id` 复合键，状态机唯一索引 |
 | Leading / Trailing Edge | 限流窗口的首帧立即渲染 / 尾帧合并渲染 |
 | Orphan Update | 先于 START 到达的 UPDATE |
-| Capability Probe | 启动时的系统能力探测 |
+| Capability Probe | 系统能力探测（启动时缓存，可由 `refreshCapabilities()` 刷新） |
 | FGS | Foreground Service，前台服务 |
 | UDF | Unidirectional Data Flow，单向数据流 |
 
@@ -614,4 +618,6 @@ Glance 产出的 `RemoteViews` 复用同一套限流、乱序、跨进程、Bind
 **v1.2 → v1.3 边缘场景压实（评审级封版）：** ①多进程冷启动并发锁防御——provider 单实例漏斗串行化 + WAL + 阶梯退避重试，并纠正「`multiprocess=true` 反效果」反模式（§5.2）；②无权限静默压实（Silent Compaction）——无通知权限时限流切 Max Backoff、挂起重绘定时器省算力（§4.2/§6）；③`clear_policy` 闹钟规约——非精确 `setAndAllowWhileIdle` 免 `SCHEDULE_EXACT_ALARM`、目标改**静态清单 Receiver** 以扛进程被杀、`FLAG_IMMUTABLE` + 显式 Component（§9）。**两处工程纠错**：`android:multiprocess="true"` 反效果、动态 Receiver 无法扛进程死亡。
 
 **文档收口（开工路标）：** ①新增 §3.6 门面 `LiveKit` 与引擎 `LiveKitEngine` 的职责边界与信息屏障（可见性 / 进程 / 校验 / 分发 / 生命周期 / 容灾映射 + 进程漏斗约束）；②§13 由粗粒度策略升级为「模块 ↔ 测试用例」质量矩阵，覆盖 state/queue/lifecycle/store/adaptor/facade 全模块与端到端进程死亡恢复，供 Contributor 认领。
+
+**v1.3 → v1.4 权限恢复闭环：** 能力快照（Capability Probe）原仅在 `init()` 探测一次；若初始化时 `POST_NOTIFICATIONS` 未授予，快照持续误判「无通知权限」，即使用户后续授权也无法渲染。新增 `LiveKit.refreshCapabilities()`：宿主在权限授予后调用，SDK 重新探测；检测到权限由关转开时自动补渲染被 `PermissionMissing` 拦下的在途活动，闭合「无权限静默压实（§6/§7）」的恢复路径。
 ```
