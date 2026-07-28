@@ -141,7 +141,7 @@ object LiveKit {
         payload = payload,
     )
 
-    private fun parse(json: String): Envelope {
+    internal fun parse(json: String): Envelope {
         val o = JSONObject(json)
         val payload = o.optJSONObject("payload")?.let { p ->
             buildMap { p.keys().forEach { k -> put(k, p.get(k)) } }
