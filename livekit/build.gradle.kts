@@ -36,6 +36,8 @@ dependencies {
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
+    // 真实 org.json：AGP unit test 默认用 android.jar 的 stub（方法返回默认值），无法真正解析 JSON。
+    testImplementation(libs.org.json)
 }
 
 // 发布到 Maven Central Portal（vanniktech：一并处理签名 + sources/javadoc + POM + 上传）。

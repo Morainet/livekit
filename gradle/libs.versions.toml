@@ -6,6 +6,7 @@ androidxCore = "1.17.0"
 androidxActivity = "1.10.1"
 mmkv = "2.4.0"
 junit = "4.13.2"
+orgJson = "20240303"
 mavenPublish = "0.34.0"
 
 minSdk = "24"
@@ -19,6 +20,8 @@ androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "androidx
 androidx-activity = { module = "androidx.activity:activity-ktx", version.ref = "androidxActivity" }
 mmkv = { module = "com.tencent:mmkv", version.ref = "mmkv" }
 junit = { module = "junit:junit", version.ref = "junit" }
+# unit test 用真实 org.json 实现替代 android.jar 的 stub（AGP 默认 stub 的 getString 返回 null）
+org-json = { module = "org.json:json", version.ref = "orgJson" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
