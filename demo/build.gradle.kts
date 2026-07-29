@@ -40,7 +40,9 @@ android {
 }
 
 dependencies {
-    implementation("io.github.morainet:livekit:0.0.2")
+    // demo 与 livekit 同处一个 monorepo，直接引用源码工程。
+    // 远程坐标 io.github.morainet:livekit:x.y.z 仅用于外部消费者；用 project 才能始终吃到最新源码。
+    implementation(project(":livekit"))
     implementation(libs.androidx.core.ktx)
     // registerForActivityResult / ActivityResultContracts 来源，用于运行时申请 POST_NOTIFICATIONS。
     implementation(libs.androidx.activity)
