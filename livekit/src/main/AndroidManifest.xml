@@ -18,6 +18,10 @@
         <receiver
             android:name="com.morainet.livekit.internal.platform.LiveKitCleanupReceiver"
             android:exported="false" />
+
+        <receiver
+            android:name="com.morainet.livekit.internal.platform.LiveKitActionReceiver"
+            android:exported="false" />
     </application>
 
 </manifest>

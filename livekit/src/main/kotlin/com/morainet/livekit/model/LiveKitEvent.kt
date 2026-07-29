@@ -19,6 +19,8 @@ sealed interface LiveKitEvent {
     data class Degraded(val key: String, val from: RenderChannel, val to: RenderChannel) : LiveKitEvent
     data class PermissionMissing(val key: String) : LiveKitEvent
     data class Throttled(val key: String, val mergedCount: Int) : LiveKitEvent
+    /** 用户点击了卡片上的交互按钮（[LiveAction]）。[actionId] 对应 LiveAction.id。 */
+    data class ActionClicked(val actionId: String, val key: String) : LiveKitEvent
     /** 收到高于 SDK 支持上限的协议版本：已尽力解析已知字段并照常处理（白皮书 §10.1）。 */
     data class UnsupportedVersion(val version: Int, val key: String) : LiveKitEvent
 }

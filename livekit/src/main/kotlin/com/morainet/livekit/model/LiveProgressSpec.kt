@@ -33,6 +33,8 @@ data class LiveProgressSpec(
     val largeIconBitmap: Bitmap? = null,
     /** 若非空，绑定系统零功耗倒计时至该绝对时间戳（毫秒）。 */
     val countdownTargetMs: Long? = null,
+    /** 卡片交互按钮；SDK 挂为 Notification.Action，点击经 ActionClicked 回调宿主。 */
+    val actions: List<LiveAction> = emptyList(),
 ) {
     data class Segment(val length: Int, @param:ColorInt val color: Int = 0)
     data class Point(val position: Int, @param:ColorInt val color: Int = 0)

@@ -33,6 +33,7 @@ internal class NotificationAdaptor(
     private val maxBitmapBytes: Int,
     private val maxBitmapDimenPx: Int,
     private val onError: (Throwable, String?) -> Unit,
+    private val actionIntentFactory: (internalKey: String, actionId: String) -> android.app.PendingIntent,
 ) : PlatformAdaptor {
 
     private val ensuredChannels = HashSet<String>()
@@ -54,7 +55,7 @@ internal class NotificationAdaptor(
                 onError(t, request.internalKey)
                 return null
             }
-            return buildProgressNotification(spec, progressTpl.smallIconRes, request.channelId) to RenderChannel.PROGRESS_STYLE
+            return buildProgressNotification(spec, progressTpl.smallIconRes, request.channelId, request.internalKey) to RenderChannel.PROGRESS_STYLE
         }
         val rv = buildRemoteViewsNotification(request) ?: return null
         return rv to RenderChannel.REMOTE_VIEWS
@@ -83,7 +84,9 @@ internal class NotificationAdaptor(
             .build()
     }
 
-    private fun buildProgressNotification(spec: LiveProgressSpec, smallIcon: Int, channelId: String): Notification {
+    private fun buildProgressNotification(
+        spec: LiveProgressSpec, smallIcon: Int, channelId: String, internalKey: String,
+    ): Notification {
         ensureChannel(channelId)
         val style = NotificationCompat.ProgressStyle()
             .setProgress(spec.progress)
@@ -119,6 +122,12 @@ internal class NotificationAdaptor(
         }
         spec.countdownTargetMs?.let {
             builder.setWhen(it).setUsesChronometer(true).setChronometerCountDown(true)
+        }
+        // 交互按钮：逐个挂为 Notification.Action，PendingIntent 由引擎统一构造。
+        for (action in spec.actions) {
+            val pi = actionIntentFactory(internalKey, action.id)
+            val icon = if (action.iconRes != 0) IconCompat.createWithResource(context, action.iconRes) else null
+            builder.addAction(NotificationCompat.Action.Builder(icon, action.label, pi).build())
         }
         return builder.build()
     }

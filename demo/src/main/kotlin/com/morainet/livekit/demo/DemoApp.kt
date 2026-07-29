@@ -17,6 +17,7 @@ import com.morainet.livekit.LiveKitConfig
 import com.morainet.livekit.LiveKitCountdown
 import com.morainet.livekit.model.LiveKitEvent
 import com.morainet.livekit.model.LiveKitObserver
+import com.morainet.livekit.model.LiveAction
 import com.morainet.livekit.model.LiveProgressSpec
 import com.morainet.livekit.store.MmkvLiveKitStore
 import com.tencent.mmkv.MMKV
@@ -103,6 +104,11 @@ class DemoApp : Application() {
                     progress = progress, segments = segments, points = points,
                     trackerIconRes = R.drawable.delivery_truck, largeIconRes = cupcake,
                     countdownTargetMs = System.currentTimeMillis() + 2 * 60 * 1000L,
+                    // 交互按钮示例：骑手到楼下时给出「联系骑手」「去开门」。
+                    actions = listOf(
+                        LiveAction(id = "call_rider", label = "联系骑手"),
+                        LiveAction(id = "open_door", label = "去开门"),
+                    ),
                 )
                 else -> LiveProgressSpec(
                     title = "订单已完成", text = "感谢使用，请及时取餐", shortCriticalText = "已送达",

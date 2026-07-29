@@ -20,6 +20,7 @@ import com.morainet.livekit.internal.lifecycle.LiveKitLifecycleTracker
 import com.morainet.livekit.internal.platform.Capabilities
 import com.morainet.livekit.internal.platform.CapabilityProbe
 import com.morainet.livekit.internal.platform.LiveKitCleanupReceiver
+import com.morainet.livekit.internal.platform.LiveKitActionReceiver
 import com.morainet.livekit.internal.platform.LiveKitForegroundService
 import com.morainet.livekit.internal.platform.NotificationAdaptor
 import com.morainet.livekit.internal.platform.NotifyIdMapper
@@ -56,6 +57,10 @@ import kotlinx.coroutines.withContext
  * 与「:push 跨进程唤醒」两条路径。:push 进程只落盘不渲染。
  */
 internal object LiveKitEngine {
+
+    /** 卡片点击跨进程信号 key 前缀，与活动状态 key 隔离，避免误触发渲染。 */
+    private const val ACTION_SIGNAL_PREFIX = "__livekit_action__"
+    private const val ACTION_SIGNAL_SEP = '\u0001'
 
     private lateinit var appContext: Context
     private var config: LiveKitConfig = LiveKitConfig()
@@ -101,7 +106,9 @@ internal object LiveKitEngine {
             adaptor = NotificationAdaptor(
             appContext, registry, config.smallIconRes,
             config.maxBitmapBytes, config.maxBitmapDimenPx,
-        ) { t, k -> this.observer?.onError(t, k) }
+            onError = { t, k -> this.observer?.onError(t, k) },
+            actionIntentFactory = { internalKey, actionId -> actionPendingIntent(internalKey, actionId) },
+        )
             throttle = ThrottleQueue(scope, config.defaultThrottleWindowMs) { key, payload -> renderNow(key, payload) }
             caps = CapabilityProbe.probe(appContext)
             (appContext as? Application)?.let { LiveKitLifecycleTracker.startTracking(it) }
@@ -196,6 +203,27 @@ internal object LiveKitEngine {
         }
     }
 
+    /**
+     * 卡片交互按钮点击入口（白皮书 §6 增强）。
+     *
+     * 可能在任意进程触发（:push 渲染的卡片点击）：:main 直接 emit；:push 经内置 provider 的
+     * 纯信号通道把信号送到 :main，由 [onStoreChanged] 解析前缀后 emit。
+     * 注意 :push 的 observer 为 null，绝不能直接 emit（事件会丢）。
+     */
+    fun handleAction(internalKey: String, actionId: String) {
+        if (!initialized) return
+        if (isMain) {
+            emit(LiveKitEvent.ActionClicked(actionId, internalKey))
+        } else {
+            // :push → :main：发纯信号（不落盘），key 用专属前缀隔离，避免触发渲染。
+            runCatching {
+                val authority = "${appContext.packageName}.livekit.store"
+                val signal = "$ACTION_SIGNAL_PREFIX$actionId$ACTION_SIGNAL_SEP$internalKey"
+                appContext.contentResolver.call(authority, "notify", signal, null)
+            }
+        }
+    }
+
     private fun reconcileOnStart() {
         scope.launch {
             runCatching { stateStore.keys() }.getOrDefault(emptySet()).forEach { onStoreChanged(it) }
@@ -204,6 +232,17 @@ internal object LiveKitEngine {
 
     private fun onStoreChanged(key: String) {
         if (!isMain) return
+        // 点击信号（来自 :push 的纯信号通道）：解析后 emit，不进渲染链路。
+        if (key.startsWith(ACTION_SIGNAL_PREFIX)) {
+            val rest = key.removePrefix(ACTION_SIGNAL_PREFIX)
+            val sep = rest.indexOf(ACTION_SIGNAL_SEP)
+            if (sep > 0) {
+                val actionId = rest.substring(0, sep)
+                val internalKey = rest.substring(sep + 1) // ACTION_SIGNAL_SEP 为单字符
+                emit(LiveKitEvent.ActionClicked(actionId, internalKey))
+            }
+            return
+        }
         scope.launch {
             val state = stateStore.get(key)
             if (state == null) {
@@ -247,6 +286,25 @@ internal object LiveKitEngine {
         return PendingIntent.getBroadcast(
             appContext,
             NotifyIdMapper.idFor(key),
+            intent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+        )
+    }
+
+    /**
+     * 卡片交互按钮的 PendingIntent（白皮书 §6 增强）：显式 Intent 指向 [LiveKitActionReceiver]，
+     * extra 带 actionId + key。requestCode 用 `NotifyIdMapper.idFor("$key#$actionId")`，
+     * 既稳定（通知刷新时同按钮复用）又与通知 id 空间（仅 $key）隔离。
+     */
+    internal fun actionPendingIntent(internalKey: String, actionId: String): PendingIntent {
+        val intent = Intent(appContext, LiveKitActionReceiver::class.java).apply {
+            action = LiveKitActionReceiver.ACTION
+            putExtra(LiveKitActionReceiver.EXTRA_KEY, internalKey)
+            putExtra(LiveKitActionReceiver.EXTRA_ACTION, actionId)
+        }
+        return PendingIntent.getBroadcast(
+            appContext,
+            NotifyIdMapper.idFor("$internalKey#$actionId"),
             intent,
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
