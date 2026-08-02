@@ -7,6 +7,8 @@
 package com.morainet.livekit.demo
 
 import android.Manifest
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -14,6 +16,8 @@ import android.os.Handler
 import android.os.Looper
 import android.view.View
 import android.widget.Button
+import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
@@ -21,6 +25,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
+import com.google.firebase.messaging.FirebaseMessaging
 import com.morainet.livekit.LiveKit
 
 class MainActivity : ComponentActivity() {
@@ -28,6 +33,7 @@ class MainActivity : ComponentActivity() {
     private val biz = "food"
     private val actId = "10001"
     private val main = Handler(Looper.getMainLooper())
+    private var fcmToken: String? = null
 
     // Android 13+（API 33+）必须运行时申请 POST_NOTIFICATIONS。
     // 授权后调 refreshCapabilities()：SDK 重新探测能力并自动补渲染被 PermissionMissing 拦下的活动。
@@ -47,6 +53,28 @@ class MainActivity : ComponentActivity() {
         findViewById<Button>(R.id.btn_update).setOnClickListener { doUpdate() }
         findViewById<Button>(R.id.btn_end).setOnClickListener { doEnd() }
         findViewById<Button>(R.id.btn_huge).setOnClickListener { doHugeImage() }
+        findViewById<Button>(R.id.btn_copy_token).setOnClickListener { copyFcmToken() }
+        loadFcmToken()
+    }
+
+    /** 异步获取 FCM token 展示，供用脚本/控制台向其推送测试消息。 */
+    private fun loadFcmToken() {
+        val tokenView = findViewById<TextView>(R.id.fcm_token)
+        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                fcmToken = task.result
+                tokenView.text = fcmToken
+            } else {
+                tokenView.text = getString(R.string.fcm_token_failed)
+            }
+        }
+    }
+
+    private fun copyFcmToken() {
+        val token = fcmToken ?: return
+        val clip = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
+        clip.setPrimaryClip(ClipData.newPlainText("fcm_token", token))
+        Toast.makeText(this, "Token 已复制", Toast.LENGTH_SHORT).show()
     }
 
     /** Android 13+ 首次进入弹窗申请通知权限；已授予或低版本直接跳过。 */

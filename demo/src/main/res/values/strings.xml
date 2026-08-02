@@ -20,5 +20,13 @@
     <string name="card_bitmap_desc">推送一张 4000×4000（≈64MB）巨图，SDK 自动等比下采样后再上通知，避免 TransactionTooLargeException。</string>
     <string name="btn_huge">巨图安全渲染</string>
 
+    <string name="card_fcm_title">FCM 推送测试</string>
+    <string name="card_fcm_desc">用 FCM data 消息驱动实时活动。复制下方 token，用 Firebase 控制台或脚本向其推送标准 LiveKit JSON（data 的 livekit 键）。</string>
+    <string name="fcm_token_label">设备 FCM Token</string>
+    <string name="fcm_token_loading">获取中…</string>
+    <string name="fcm_token_failed">获取失败（检查 google-services.json 与网络）</string>
+    <string name="btn_copy_token">复制 Token</string>
+    <string name="btn_send_test_push">发送测试推送（需本机脚本）</string>
+
     <string name="footer_hint">下拉通知栏查看实时活动</string>
 </resources>

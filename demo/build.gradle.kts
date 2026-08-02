@@ -1,6 +1,9 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    // google-services：读取 demo/google-services.json 注入 Firebase 配置。
+    // 注意：缺少该文件时构建会失败，需从 Firebase 控制台下载后放入 demo/（见 README）。
+    alias(libs.plugins.google.services)
 }
 
 android {
@@ -47,4 +50,7 @@ dependencies {
     // registerForActivityResult / ActivityResultContracts 来源，用于运行时申请 POST_NOTIFICATIONS。
     implementation(libs.androidx.activity)
     implementation(libs.mmkv)
+    // FCM 推送测试：firebase-bom 统一版本，仅需 firebase-messaging 收推送。
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.messaging)
 }

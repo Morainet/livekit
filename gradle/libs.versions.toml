@@ -8,6 +8,8 @@ mmkv = "2.4.0"
 junit = "4.13.2"
 orgJson = "20240303"
 mavenPublish = "0.34.0"
+firebaseBom = "33.10.0"
+googleServices = "4.4.2"
 
 minSdk = "24"
 compileSdk = "36"
@@ -22,9 +24,13 @@ mmkv = { module = "com.tencent:mmkv", version.ref = "mmkv" }
 junit = { module = "junit:junit", version.ref = "junit" }
 # unit test 用真实 org.json 实现替代 android.jar 的 stub（AGP 默认 stub 的 getString 返回 null）
 org-json = { module = "org.json:json", version.ref = "orgJson" }
+# demo FCM 推送测试：firebase-bom 统一版本，仅需 firebase-messaging。
+firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
+firebase-messaging = { module = "com.google.firebase:firebase-messaging" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 android-library = { id = "com.android.library", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 vanniktech-publish = { id = "com.vanniktech.maven.publish", version.ref = "mavenPublish" }
+google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }
