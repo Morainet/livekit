@@ -11,6 +11,3 @@ captures/
 
 # ZCode 工具本地文件
 .zcode/
-
-# Firebase 配置含项目凭据，不入库（见 demo/README 或 google-services.json.example）
-demo/google-services.json

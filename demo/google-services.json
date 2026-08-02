@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "497351520295",
+    "project_id": "livekit-88e06",
+    "storage_bucket": "livekit-88e06.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:497351520295:android:eab7e56419a58924c11e02",
+        "android_client_info": {
+          "package_name": "com.morainet.livekit.demo"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCBvNFyvAwpiI0xzZ7mLIvk5Ekg7_G2Qbk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
