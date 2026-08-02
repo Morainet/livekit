@@ -51,7 +51,7 @@ mavenPublishing {
     if (project.findProperty("signingInMemoryKey") != null) {
         signAllPublications()
     }
-    coordinates("io.github.morainet", "livekit", System.getenv("RELEASE_VERSION") ?: "0.0.2")
+    coordinates("io.github.morainet", "livekit", System.getenv("RELEASE_VERSION") ?: "0.0.3")
 
     pom {
         name.set("LiveKit")

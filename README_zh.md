@@ -38,7 +38,7 @@
 
 ```kotlin
 dependencies {
-    implementation("io.github.morainet:livekit:0.0.2")
+    implementation("io.github.morainet:livekit:0.0.3")
 
     // 可选：高性能多进程存储后端
     implementation("com.tencent:mmkv:2.4.0")

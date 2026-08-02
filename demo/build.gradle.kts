@@ -43,9 +43,9 @@ android {
 }
 
 dependencies {
-    // demo 与 livekit 同处一个 monorepo，直接引用源码工程。
-    // 远程坐标 io.github.morainet:livekit:x.y.z 仅用于外部消费者；用 project 才能始终吃到最新源码。
-    implementation(project(":livekit"))
+    // 使用最新发布到 Maven Central 的组件（0.0.3），验证发布产物在真实消费侧可用。
+    // 改动源码后需重新发布（打 tag → Release workflow）才能在此吃到。
+    implementation("io.github.morainet:livekit:0.0.3")
     implementation(libs.androidx.core.ktx)
     // registerForActivityResult / ActivityResultContracts 来源，用于运行时申请 POST_NOTIFICATIONS。
     implementation(libs.androidx.activity)
