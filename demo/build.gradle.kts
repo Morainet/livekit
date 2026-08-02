@@ -27,6 +27,12 @@ android {
         jvmTarget = "17"
     }
 
+    lint {
+        // registerForActivityResult 在 ComponentActivity（非 FragmentActivity）上是安全的；
+        // 此检查误判 fragment 版本，demo 用 1.10.1 的 androidx.activity 远高于要求的 1.3.0。
+        disable += "InvalidFragmentVersionForActivityResult"
+    }
+
     buildTypes {
         release {
             // 开 R8：验证 SDK 的 consumer-rules 能保住公开 API 与清单组件。
